@@ -15,7 +15,7 @@ contract SimpleArtistContract  {
     require(msg.value >= 0);
 
     // Min price
-    require(msg.value >= pricePerBlockInWei);
+    require(msg.value >= (pricePerBlockInWei * minBlockPurchaseInOneGo));
 
     // max price
     require(msg.value <= (pricePerBlockInWei * maxBlockPurchaseInOneGo));
@@ -36,9 +36,10 @@ contract SimpleArtistContract  {
 
   uint256 public pricePerBlockInWei;
   uint256 public maxBlockPurchaseInOneGo;
+  uint256 public minBlockPurchaseInOneGo;
   bool public onlyShowPurchased = false;
 
-  address public foundationAddress = 0xf43aE50C468c3D3Fa0C3dC3454E797317EF53078;
+  address public foundationAddress = 0x2b54605eF16c4da53E32eC20b7F170389350E9F1;
   uint256 public foundationPercentage = 5; // 5% to foundation
 
   mapping(uint256 => uint256) internal blocknumberToTokenId;
@@ -46,7 +47,7 @@ contract SimpleArtistContract  {
 
   uint256 public lastPurchasedBlock = 0;
 
-  constructor(InterfaceToken _token, uint256 _pricePerBlockInWei, uint256 _maxBlockPurchaseInOneGo, address _artist) public {
+  constructor(InterfaceToken _token, uint256 _pricePerBlockInWei, uint256 _maxBlockPurchaseInOneGo, uint256 _minBlockPurchaseInOneGo, address _artist) public {
     require(_artist != address(0));
     artist = _artist;
 
@@ -54,6 +55,7 @@ contract SimpleArtistContract  {
 
     pricePerBlockInWei = _pricePerBlockInWei;
     maxBlockPurchaseInOneGo = _maxBlockPurchaseInOneGo;
+    minBlockPurchaseInOneGo = _minBlockPurchaseInOneGo;
 
     // set to current block mined in
     lastPurchasedBlock = block.number;
@@ -67,7 +69,7 @@ contract SimpleArtistContract  {
       purchase(token.firstToken(msg.sender));
     }
     else {
-      // 4% to foundation
+      // 5% to foundation
       uint foundationShare = msg.value / 100 * foundationPercentage;
       foundationAddress.transfer(foundationShare);
 
@@ -113,7 +115,7 @@ contract SimpleArtistContract  {
 
     // payments
 
-    // 4% to foundation
+    // 5% to foundation
     uint foundationShare = msg.value / 100 * foundationPercentage;
     foundationAddress.transfer(foundationShare);
 
@@ -191,7 +193,7 @@ contract SimpleArtistContract  {
     }
 
     if (onlyShowPurchased) {
-      return (0x0, 0x0);
+      return (0x0, nextBlocknumber);
     }
 
     // if no one own the current blockhash return current
@@ -220,6 +222,14 @@ contract SimpleArtistContract  {
   function setMaxBlockPurchaseInOneGo( uint256 _maxBlockPurchaseInOneGo) external onlyArtist {
     maxBlockPurchaseInOneGo = _maxBlockPurchaseInOneGo;
   }
+  
+  /**
+   * @dev Utility function for updating min blocks
+   * @param _minBlockPurchaseInOneGo min blocks per purchase
+   */
+  function setMinBlockPurchaseInOneGo( uint256 _minBlockPurchaseInOneGo) external onlyArtist {
+    minBlockPurchaseInOneGo = _minBlockPurchaseInOneGo;
+  }
 
   /**
  * @dev Utility function for only show purchased
@@ -229,3 +239,4 @@ contract SimpleArtistContract  {
     onlyShowPurchased = _onlyShowPurchased;
   }
 }
+
